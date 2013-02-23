@@ -1,3 +1,17 @@
+/*
+   Deniz Sökmen
+   e-mail:sokmendeniz@gmail.com
+   
+   A simple loader for .obj file format.
+   In .obj format, defined the model's vertex,
+   normal and texture coordinates. 
+   These coordinates aren't directly drawn,
+   it is the "faces" which determines what to draw.
+   
+   There are sure plenty more improvements to do.
+   
+*/
+
 #ifndef OBJ_H_INC
 #define OBJ_H_INC
 #include <Windows.h>
@@ -5,14 +19,7 @@
 #include <GL/glu.h>
 #include <iostream>
 #include <vector>
-#include "opengl.h"
-#include "terrain.h"
 
-#define VBO_VERTEX 0
-#define VBO_NORMAL 1
-#define VBO_COLOR 2
-#define VBO_UV 3
-#define VBO_INDEX 4
 
 struct VertexCoord
 {
@@ -46,7 +53,6 @@ struct VBOVertex
 class ObjLoader
 {
 	GLuint VBO;
-	int numVerts;
 	std::vector<VBOVertex> modeldata;
 	
 public:

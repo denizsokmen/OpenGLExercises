@@ -1,4 +1,16 @@
-
+/*
+   Deniz Sökmen
+   e-mail:sokmendeniz@gmail.com
+   
+   A simple loader for .obj file format.
+   In .obj format, defined the model's vertex,
+   normal and texture coordinates. 
+   These coordinates aren't directly drawn,
+   it is the "faces" which determines what to draw.
+   
+   There are sure plenty more improvements to do.
+   
+*/
 
 #include "ObjLoader.h"
 #include <fstream>
@@ -8,7 +20,7 @@ using namespace std;
 
 ObjLoader::ObjLoader(void)
 {
-	numVerts=0;
+
 }
 
 
@@ -28,6 +40,7 @@ void ObjLoader::loadModel(const char* fileName) {
 	vector<TextureCoord>	textureData;
 	vector<ColorComp>	colorData;
 	
+	/* Loading the vertices, normals, tex. coords and faces*/
 	while (getline(fs,line)) {
 		if (line.substr(0,2) == "v ") {
 			istringstream s(line.substr(2));
@@ -55,11 +68,15 @@ void ObjLoader::loadModel(const char* fileName) {
 	}
 	fs.close();
 	
+	
+	/*After loading, the faces will determine what
+	is going to be buffered to graphics card's memory.*/
 
 	VBOVertex newVert[3];
 	int v[3],n[3],t[3];
 	for (size_t i=0; i < faceList.size(); i++) {	
-		sscanf(faceList[i].c_str(),"f %d/%d/%d %d/%d/%d %d/%d/%d",&v[0],&t[0],&n[0],
+		sscanf(faceList[i].c_str(),"f %d/%d/%d %d/%d/%d %d/%d/%d",
+			&v[0],&t[0],&n[0],
 			&v[1],&t[1],&n[1],
 			&v[2],&t[2],&n[2]);
 	
@@ -74,39 +91,37 @@ void ObjLoader::loadModel(const char* fileName) {
 			newVert[j].nz=normalData[n[j]-1].z;
 			modeldata.push_back(newVert[j]);
 		}
-		numVerts++;
 	}
 
-
-	glGenBuffers(1,&VBO);
-	glBindBuffer(GL_ARRAY_BUFFER,VBO);
-	glBufferData(GL_ARRAY_BUFFER,modeldata.size()*sizeof(VBOVertex),&modeldata[0],GL_STATIC_DRAW);
+	// create handle
+	glGenBuffers(1,&VBO); 
+	// use the handle
+	glBindBuffer(GL_ARRAY_BUFFER,VBO); 
+	// upload the buffer to graphics card memory, specify that it will never be changed.
+	glBufferData(GL_ARRAY_BUFFER,modeldata.size()*sizeof(VBOVertex),&modeldata[0],GL_STATIC_DRAW); 
+	 // release the handle
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 }
 
 
 
 void ObjLoader::render() {
-	glPushMatrix();
-	//glLoadIdentity();
-	glTranslatef(55.0f,400.0f,55.0);
-	glScalef(1.0f,1.0f,1.0f);
-	glRotatef(180.0,0.0,0.0,1.0);
-	glRotatef(90.0,1.0,0.0,0.0);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	
+	// use the handle
+	glBindBuffer(GL_ARRAY_BUFFER, VBO); 
+
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(VBOVertex), BUFFER_OFFSET(6 * sizeof(float)));
+	// specify the pointer to the texture coordinates
+    glTexCoordPointer(2, GL_FLOAT, sizeof(VBOVertex), BUFFER_OFFSET(6 * sizeof(float))); 
 
     glEnableClientState(GL_NORMAL_ARRAY);
-    glNormalPointer(GL_FLOAT, sizeof(VBOVertex), BUFFER_OFFSET(3 * sizeof(float)));
+	// specify the pointer to the normal coordinates
+    glNormalPointer(GL_FLOAT, sizeof(VBOVertex), BUFFER_OFFSET(3 * sizeof(float))); 
 
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, sizeof(VBOVertex),0);
+	// specify the pointer to the vertex coordinates
+    glVertexPointer(3, GL_FLOAT, sizeof(VBOVertex),0); 
 	
+	// draw
     glDrawArrays(GL_TRIANGLES,0,modeldata.size());
   
 
@@ -114,6 +129,6 @@ void ObjLoader::render() {
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glPopMatrix();
+	// release the handle
+    glBindBuffer(GL_ARRAY_BUFFER, 0); 
 }
