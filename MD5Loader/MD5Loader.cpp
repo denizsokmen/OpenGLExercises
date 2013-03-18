@@ -1,0 +1,128 @@
+#include "MD5Loader.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <stdio.h>
+
+MD5Loader::MD5Loader(void)
+{
+}
+
+
+MD5Loader::~MD5Loader(void)
+{
+}
+
+void MD5Loader::load(char *filename) 
+{
+	FILE *f;
+	char data[512];
+	f=fopen(filename,"rb");
+	int ver,curMesh=0;
+	
+	while(!feof(f)) 
+	{
+		fgets(data,sizeof(data),f);
+
+		if (sscanf(data," MD5Version %d", &ver) == 1) 
+		{
+
+		} 
+		else if (sscanf(data," numJoints %d", &numJoints) == 1) 
+		{
+			if (numJoints > 0) 
+			{
+				joints = new Joint[numJoints];
+			}
+		}
+		else if (sscanf(data," numMeshes %d", &numMeshes) == 1)
+		{
+			if (numMeshes > 0) 
+			{
+				meshes=new Mesh[numMeshes];
+			}
+		}
+		else if (strncmp(data,"joints {",8) == 0)
+		{
+			for (int i = 0; i < numMeshes; i++)
+			{
+				Joint *j=&joints[i];
+				fgets(data,sizeof(data),f);
+				if (sscanf (data,"%s %d ( %f %f %f ) ( %f %f %f )",&j->name,&j->parentIndex,
+							&j->translation.x,&j->translation.y,&j->translation.z,
+							&j->rotation.x,&j->rotation.y,&j->rotation.z) == 8)
+				{
+					calcW(&j->rotation);
+				}
+
+
+			}
+		}
+		else if (strncmp(data,"mesh {",6) == 0)
+		{
+			Mesh *ms=&meshes[curMesh];
+			int vert_index = 0;
+			int tri_index = 0;
+			int weight_index = 0;
+			float fdata[4];
+			int idata[3];
+
+			while (data[0] != '}' && !feof(f)) 
+			{
+				fgets(data,sizeof(data),f);
+
+				if (sscanf (data," numverts %d", &ms->numVert) == 1) 
+				{
+					if (ms->numVert > 0)
+					{
+						ms->vertex = new WeightedVertex[ms->numVert];
+					}
+
+				}
+				else if (sscanf (data," numtris %d", &ms->numTris) == 1)
+				{
+					if (ms->numTris > 0)
+					{
+						ms->triangles = new Triangle[ms->numTris];
+					}
+				}
+				else if (sscanf (data," numweights %d", &ms->numWeights) == 1) 
+				{
+					if (ms->numWeights > 0)
+					{
+						ms->weights=new Weight[ms->numWeights];
+					}
+				}
+				else if (sscanf (data," vert %d ( %f %f ) %d %d", &vert_index, &fdata[0], &fdata[1], 
+								idata[0], idata[0]) == 5)
+				{
+					ms->vertex[vert_index].s=fdata[0];
+					ms->vertex[vert_index].t=fdata[1];
+					ms->vertex[vert_index].weightIndex=idata[0];
+					ms->vertex[vert_index].weightNum=idata[1];
+				}
+				else if (sscanf (data," tri %d %d %d %d",&tri_index,&idata[0],&idata[1],&idata[2]) == 4)
+				{
+					ms->triangles[tri_index].index[0]=idata[0];
+					ms->triangles[tri_index].index[1]=idata[1];
+					ms->triangles[tri_index].index[2]=idata[2];
+				}
+				else if (sscanf (data," weight %d %d %f ( %f %f %f )",
+								&weight_index, &idata[0], &fdata[0], &fdata[1],
+								&data[2], &fdata[3]) == 8)
+				{
+					ms->weights[weight_index].boneIndex=idata[0];
+					ms->weights[weight_index].bias=fdata[0];
+					ms->weights[weight_index].position.x=fdata[1];
+					ms->weights[weight_index].position.y=fdata[2];
+					ms->weights[weight_index].position.z=fdata[3];
+				}
+			}
+			curMesh++;
+		}
+	}
+
+	fclose(f);
+
+}
