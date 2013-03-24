@@ -1,6 +1,13 @@
 #ifndef MD5_L_INC
 #define MD5_L_INC
 #include "mathlib.h"
+#include <Windows.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <iostream>
+#include <vector>
+#include "opengl.h"
+#include "terrain.h"
 class MD5Loader
 {
 	struct Joint {
@@ -20,7 +27,9 @@ class MD5Loader
 	};
 
 	struct WeightedVertex {
-		float s,t;
+		Vector3 pos;
+		Vector3 normal;
+		Vector2 texCoord;
 		int weightIndex;
 		int weightNum;
 	};
@@ -56,7 +65,8 @@ public:
 		else
 			quot->w = -sqrt(t);
 	}
-
+	void prepareMesh( Mesh *ms);
+	void draw();
 
 };
 
